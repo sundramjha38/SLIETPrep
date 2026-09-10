@@ -1,3 +1,4 @@
+import Curriculum from "../models/curriculum.model.js";
 import curriculumModel from "../models/curriculum.model.js";
 
 export const createCurriculum = async(req,res)=>{
@@ -45,3 +46,48 @@ export const createCurriculum = async(req,res)=>{
         })
     }
 }
+
+// get curriculum constrollers
+ export const getCurriculum = async(req , res) =>{
+    try{
+        const { degreeType,branch,semester} = req.body;
+        // if any of them is not available return that all are required 
+        if(!degreeType || !branch || !semester)
+        {
+            return res.status(400).json({
+                success:false,
+                message:"DegreeType , Branch and semester all are required"
+            })
+        }
+
+        const curriculum= await Curriculum.findOne(
+            {
+                degreeType,branch,semester
+            }
+        );
+
+        // if no curriculum then return no curriculum exist 
+        if(!curriculum)
+        {
+            return res.status(404).json({
+                success:false,
+                message:"No curriculm with this data exists"
+            });
+        }
+
+        return res.status(200).json({
+            success:true,
+            curriculum
+        })
+
+    }catch(error)
+    {
+        console.error("internal server error " , error);
+
+        return res.status(500).json({
+            success:false,
+            message:"internal server error in fetching the curriculum"
+        })
+
+    }
+ }
