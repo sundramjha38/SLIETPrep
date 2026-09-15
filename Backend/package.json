@@ -12,20 +12,23 @@
     "seed:mechanical": "node seed/mechanical.seed.js",
     "seed:chemical": "node seed/chemical.seed.js",
     "seed:food": "node seed/food.seed.js"
-
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@google/genai": "^2.22.0",
+    "@mistralai/mistralai": "^2.7.0",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "googleapis": "^178.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.4",
+    "multer": "^2.3.0",
     "nodemon": "^3.1.14",
     "validator": "^13.15.35"
   }

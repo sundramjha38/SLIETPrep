@@ -6,6 +6,9 @@ import dotenv from 'dotenv';
 import cookieParser from "cookie-parser";
 import profileRouter from "./routes/profile.routes.js";
 import curriculumRouter from "./routes/curriculum.routes.js";
+import QuestionPaperRouter from "./routes/questionPaper.routes.js";
+import QuestionRouter from "./routes/question.routes.js";
+
 dotenv.config();
 const app = express();
 
@@ -21,7 +24,10 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/profile" , profileRouter); 
-app.use("/api/curriculum" , curriculumRouter);
+app.use("/api/curriculum",curriculumRouter);
+app.use("/api/question-papers" , QuestionPaperRouter);
+app.use("/api/question" , QuestionRouter) ; 
+
 
 
 app.listen(PORT, () => {
