@@ -25,7 +25,7 @@ export const createStudentProfile = async (req, res) => {
             })
         }
 
-        // now no old profiel is there with this user so create the new one and upadte the database 
+        // now no old profile is there with this user so create the new one and upadte the database 
 
         const profile = await studentProfileModel.create({
             userId,
@@ -66,10 +66,10 @@ export const updateProfile=async(req,res)=>{
             })
         }
         // now update the profile of the user and move on 
-        existingUser.degreeType=degreeType ;
-        existingUser.branch=branch;
-        existingUser.year=year;
-        existingUser.semester=semester;
+        if (degreeType !== undefined) existingUser.degreeType = degreeType;
+        if (branch !== undefined) existingUser.branch = branch;
+        if (year !== undefined) existingUser.year = year;
+        if (semester !== undefined) existingUser.semester = semester;
 
         await existingUser.save();
         return res.status(200).json({

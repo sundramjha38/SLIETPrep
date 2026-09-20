@@ -1,9 +1,9 @@
 import QuestionPaper from "../models/questionPaper.model.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 import extractTextFromPdf from "../services/mistral.service.js";
+import Question from "../models/question.model.js";
 
-import validateQuestionAnnotation from "../utils/validateQuestionAnnotation.js";
-
+// this function is to create a  question paper and add it to the databse 
 export const createQuestionPaper = async(req , res)=>{
     let uploadedPublicId=null;
     try{
@@ -52,46 +52,25 @@ export const createQuestionPaper = async(req , res)=>{
         // misreal setup 
 
         console.log("Starting Mistral OCR...");
-
-            const ocrResponse = await extractTextFromPdf(
+        const ocrResponse = await extractTextFromPdf(
                 req.file.buffer
             );
+        console.log("Mistral OCR completed successfully");
+        console.log("OCR response received:",!!ocrResponse);
+        console.log(
+            "Response keys:",
+            Object.keys(ocrResponse || {})
+        );
 
-            console.log("Mistral OCR completed successfully");
+        console.log(
+            "Document annotation:",
+             ocrResponse?.documentAnnotation
+        );
 
-            console.log(
-                "OCR response received:",
-                !!ocrResponse
-            );
+            // the validation and the normalization part will come here we will keep it later 
 
-            console.log(
-                "Response keys:",
-                Object.keys(ocrResponse || {})
-            );
 
-            console.log(
-                "Document annotation:",
-                ocrResponse?.documentAnnotation
-            );
-
-        const annotation = JSON.parse(ocrResponse?.documentAnnotation);
-        const validationResult =
-            validateQuestionAnnotation(annotation);
-
-        if (!validationResult.valid) {
-            console.error(
-                "Question annotation validation failed:",
-                validationResult.errors
-            );
-
-            return res.status(422).json({
-                success: false,
-                message: "Question paper extraction failed validation",
-                errors: validationResult.errors
-            });
-        }
-
-        console.log("Question annotation validation passed");
+            // the cloudinary code to save the orignal paper and its link and all that in the mongodb 
 
         let folderBranch;
 
@@ -127,6 +106,20 @@ export const createQuestionPaper = async(req , res)=>{
             }
         });
 
+        // the entry of the above extracted quetsions in the question databse 
+
+        const annotation = JSON.parse(ocrResponse.documentAnnotation);
+        const questions = annotation.questions.map((question) => ({
+            questionPaperId: questionPaper._id,
+            questionNumber: question.questionNumber,
+            section: question.section,
+            questionText: question.questionText,
+            marks: question.marks,
+            alternativeGroup: question.alternativeGroup
+        }));
+
+        const createdQuestions = await Question.insertMany(questions);
+
         return res.status(201).json({
             success: true,
             message: "Question paper created successfully",
@@ -141,3 +134,110 @@ export const createQuestionPaper = async(req , res)=>{
         });
     }
 };
+
+// this fucntion is retrive all the questionpaper related to a specific input 
+export const getQuestionPapers = async(req,res) =>{
+    try{
+
+        const {subjectCode , semester , examType , examYear}=req.query;
+        const filter={};
+        if(subjectCode)
+        {
+            filter.subjectCode=subjectCode;
+        }
+        if(semester)
+        {
+            filter.semester=semester;
+        }
+        if(examType)
+        {
+            filter.examType=examType;
+        }
+        if(examYear)
+        {
+            filter.examYear;
+        }
+        // now if still filter is empty then we need to return the error else find the questionpaper model based on the filter and return all the related data 
+        const questionPapers = await QuestionPaper.find(filter)
+            .sort({
+                examYear: -1
+            });
+
+        return res.status(200).json({
+            success:true,
+            message:"The required question paper is filtered ",
+            questionPapers
+        })     
+
+    }catch(error){
+        console.log("Error in fetching the question pappers " , error);
+
+        return res.status(500).json({
+            success:false,
+            message:"Unable to fetch question papers"
+        });
+    }
+}
+
+// this fucntion will give a specific questionpaper based on the id 
+
+export const getQuestionPaperById = async (req, res) => {
+    try {
+        const { questionPaperId } = req.params;
+
+        const questionPaper = await QuestionPaper.findById(
+            questionPaperId
+        );
+
+        if (!questionPaper) {
+            return res.status(404).json({
+                success: false,
+                message: "No paper with this id exists"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Paper fetched successfully",
+            questionPaper
+        });
+
+    } catch (error) {
+        console.log(
+            "Error in fetching question paper",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to fetch Question Paper"
+        });
+    }
+};
+
+// this fucntion will return all the questions related to a particular question paper 
+
+export const getQuestionByPaperId = async (req,res)=>{
+    try{
+        const {questionPaperId}=req.params;
+        const questions = await Question.find({
+            questionPaperId
+        }).sort({
+            _id:1
+        });
+
+        return res.status(200).json({
+            success:true,
+            message:"Questions fetched successfully" , 
+            count:questions.length,
+            questions
+        })
+    }catch(error){
+        console.log("Error in fetching the Question paper" , error)
+
+        return res.status(500).json({
+            success:false,
+            message:"Unable to fetch the questions for this questin paper"
+        });
+    }
+}

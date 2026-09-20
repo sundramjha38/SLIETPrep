@@ -15,9 +15,7 @@ const extractTextFromPdf = async(fileBuffer)=>{
             includeImageBase64:true,
             includeBlocks:true,
             ConfidenceScoresGranularity:"block",
-
-             documentAnnotationPrompt:
-                questionPaperAnnotationPrompt,
+            documentAnnotationPrompt: questionPaperAnnotationPrompt,
 
             documentAnnotationFormat: {
                 type: "json_schema",

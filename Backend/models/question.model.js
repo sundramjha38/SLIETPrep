@@ -33,7 +33,7 @@ const questionSchema = new mongoose.Schema(
         },
         marks:{
               type: Number,
-              required: true
+             default:null
         },
         alternativeGroup: {
             type: String,

@@ -1,6 +1,8 @@
-import Curriculum from "../models/curriculum.model.js";
-import curriculumModel from "../models/curriculum.model.js";
 
+import curriculumModel from "../models/curriculum.model.js";
+import StudentProfile from "../models/studentProfile.model.js";
+
+// get curriculum  fucntion
 export const createCurriculum = async(req,res)=>{
     try{
         const {degreeType , branch , semester , subjects}=req.body;
@@ -47,7 +49,7 @@ export const createCurriculum = async(req,res)=>{
     }
 }
 
-// get curriculum constrollers
+// get curriculum function
  export const getCurriculum = async(req , res) =>{
     try{
         const { degreeType,branch,semester} = req.body;
@@ -60,7 +62,7 @@ export const createCurriculum = async(req,res)=>{
             })
         }
 
-        const curriculum= await Curriculum.findOne(
+        const curriculum= await curriculumModel.findOne(
             {
                 degreeType,branch,semester
             }
@@ -91,3 +93,49 @@ export const createCurriculum = async(req,res)=>{
 
     }
  }
+
+//  get subjests for the ui functions 
+
+export const getMySubject = async(req,res)=>{
+    try{
+        const userId = req.user.userId;
+
+        const profile = await StudentProfile.findOne({userId});
+
+        if(!profile)
+        {
+            return res.status(404).json({
+                success:false,
+                message:"Student profile not found "
+            });
+        }
+        const curriculum = await curriculumModel.findOne({
+            degreeType:profile.degreeType,
+            branch:profile.branch,
+            semester:profile.semester
+        });
+        // if curriculum is empty then return there is no such curriclum exits 
+
+        if(!curriculum)
+        {
+            return res.status(404).json({
+                success:false,
+                message:"Curriculum not found "
+            });
+        }
+
+        // if curriculum is there then return subjects related to it 
+
+        return res.status(200).json({
+            success:true,
+            subjects:curriculum.subjects
+        });
+    }catch(error)
+    {
+        console.error("Get subjects error : " , error);
+        return res.status(500).json({
+            success:false,
+            message:"Unable to fetch subjects"
+        })
+    }
+}
