@@ -10,7 +10,7 @@ import Footer from "../../components/common/Footer";
 function Landing() {
     return (
         <>
-            <Navbar />
+            <Navbar showNavigation={true}/>
             <Hero />
             <Stats />
             <Features />
