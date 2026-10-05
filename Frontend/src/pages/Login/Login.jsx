@@ -1,7 +1,76 @@
-import { Link } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useState } from "react";
 import Navbar from "../../components/common/Navbar";
 
 function Login() {
+  // this part is for the integration between the backend and the frontend
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlError = searchParams.get("error");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // this function is to handle any change in the form and update the form data accordingly
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((current) => ({ ...current, [name]: value }));
+    setError("");
+    if (urlError) setSearchParams({});
+  };
+  // this function is to handle the submission of the form
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const { email, password } = formData;
+    try {
+      setLoading(true);
+      setError("");
+      // getting the response
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+        credentials: "include",
+      });
+
+      // validating the response
+
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || "something went wrong ");
+        return;
+      }
+
+      // redirecting to the dashboard or the profile setup for the user
+      if (data.profileExists) {
+        navigate("/dashboard");
+      } else {
+        navigate("/profile-setup");
+      }
+    } catch (error) {
+      console.log("Login error ", error);
+      setError("Unable to connect to server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // till here the logic for the integration part is done now we need to conncect the form with this integration data
+
+  // fucntion to handle the google login and redirect the user to the google auth page
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
       <Navbar showNavigation={false} />
@@ -40,7 +109,7 @@ function Login() {
             </div>
 
             {/* Form */}
-            <form className="mt-7 space-y-5 sm:mt-8">
+            <form onSubmit={handleSubmit} className=" mt-7 space-y-5 sm:mt-8">
               {/* Email */}
               <div>
                 <label
@@ -53,6 +122,9 @@ function Login() {
                 <input
                   id="email"
                   type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="you@example.com"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:text-base dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-950"
                 />
@@ -79,17 +151,27 @@ function Login() {
                 <input
                   id="password"
                   type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="Enter your password"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 sm:text-base dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-950"
                 />
               </div>
 
+              {/* this will deal with the error if any  */}
+              {(error || urlError) && (
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error || urlError}
+                </p>
+              )}
               {/* Login button */}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:text-base"
+                disabled={loading}
+                className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 sm:text-base"
               >
-                Login
+                {loading ? "Logging in..." : "Login"}
               </button>
 
               {/* Divider */}
@@ -103,8 +185,9 @@ function Login() {
 
               {/* Google */}
               <button
+                onClick={handleGoogleLogin}
                 type="button"
-                className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:text-base dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:text-base dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Continue with Google
               </button>

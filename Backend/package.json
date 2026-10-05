@@ -23,6 +23,8 @@
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
+    "cores": "^0.8.5",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "googleapis": "^178.0.0",

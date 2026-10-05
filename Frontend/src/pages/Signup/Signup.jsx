@@ -1,7 +1,77 @@
-import { Link } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useState } from "react";
 import Navbar from "../../components/common/Navbar";
 
 function Signup() {
+  // these are the things that will help me to integrate the backend and frontend of the overall site
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlError = searchParams.get("error");
+
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // here we will keep the code of the input handler which is bascially handle the anychange throughout the form and it is kind of standard fucntion which is used to handle change in form
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((current) => ({ ...current, [name]: value }));
+    setError("");
+    if (urlError) setSearchParams({});
+  };
+  // now we will add the submit handler to the form which basic purpose is to what will happen if someone submit the form
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const { name, email, password, confirmPassword } = formData;
+    if (password !== confirmPassword) {
+      setError("Password do not match");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError("");
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || "Something went wrong");
+        return;
+      }
+      navigate("/profile-setup");
+    } catch (error) {
+      console.error("Signup error:", error);
+      setError("Unable to connect to the server");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // tell evrything we have what we want now need to connect this with the form
+
+  //   adding the google redirect form in the workflow this function will deal with that function
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
       <Navbar showNavigation={false} />
@@ -41,7 +111,7 @@ function Signup() {
             </div>
 
             {/* Form */}
-            <form className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit} className=" mt-8 space-y-5 ">
               {/* Name */}
               <div>
                 <label
@@ -53,7 +123,10 @@ function Signup() {
 
                 <input
                   id="name"
+                  name="name"
                   type="text"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="Enter your full name"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-950"
                 />
@@ -70,7 +143,10 @@ function Signup() {
 
                 <input
                   id="email"
+                  name="email"
                   type="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="you@example.com"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-950"
                 />
@@ -87,7 +163,10 @@ function Signup() {
 
                 <input
                   id="password"
+                  name="password"
                   type="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="Create a password"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-950"
                 />
@@ -104,18 +183,29 @@ function Signup() {
 
                 <input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                   placeholder="Confirm your password"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-950"
                 />
               </div>
 
+              {/* this part is to show any error if it is there */}
+              {(error || urlError) && (
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error || urlError}
+                </p>
+              )}
+
               {/* Signup button */}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700"
+                disabled={loading}
+                className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Create Account
+                {loading ? "Creating account..." : "Create Account"}
               </button>
 
               {/* Divider */}
@@ -127,10 +217,14 @@ function Signup() {
                 <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
               </div>
 
+              {/* for the google part also we need to handle  sumbit button which basically purpose is to validate the google id then rediret us to google authentication and final to the site pages accordingly
+               */}
+
               {/* Google */}
               <button
+                onClick={handleGoogleLogin}
                 type="button"
-                className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Continue with Google
               </button>

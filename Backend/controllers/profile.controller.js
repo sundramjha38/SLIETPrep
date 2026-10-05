@@ -88,7 +88,7 @@ export const updateProfile=async(req,res)=>{
 export const getProfile=async(req,res)=>{
     try{
         const userId=req.user.userId;
-        const profile=await studentProfileModel.findOne({userId}).populate("userId" , "name");
+        const profile=await studentProfileModel.findOne({userId}).populate("userId" , "name , email");
 
         // if profile is not found then return profile not found
         if(!profile){
